@@ -27,6 +27,10 @@ namespace POMwJO
 
             string[] args = new string[3];
             string s = System.AppDomain.CurrentDomain.BaseDirectory;
+            for (int i = 0; i < 5; i++)
+            {
+                s = s.Remove(s.LastIndexOf("\\", s.Length - 2) + 1); 
+            }
 
             args[0] = s+"Obrazy\\abc.png";
             args[1] = "1";
