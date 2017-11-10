@@ -111,13 +111,15 @@ namespace POMwJO
                 //PixelIDValueEnum id = image2.GetPixelID();
 
                 //Execute Gausian smoothing filter
-                //SmoothingRecursiveGaussianImageFilter gausian = new SmoothingRecursiveGaussianImageFilter();
-                //gausian.SetSigma(Double.Parse(args[1]));
-                //image = gausian.Execute(image);
+                SmoothingRecursiveGaussianImageFilter gausian = new SmoothingRecursiveGaussianImageFilter();
+                gausian.SetSigma(Double.Parse(args[1]));
+                image = gausian.Execute(image);
 
                 //Convert?
+                //albo obraz wczytać w skali szarości(wymusić)
+                //albo rozbić na skale kolorów itd(rgb to grayscale filter pewnie)
                 //PixelIDValueEnum id = image.GetPixelID();
-                //SimpleITK.Cast(image, id);
+                SimpleITK.Cast(image, itk.simple.PixelIDValueEnum.sitkUInt8);
                 //id = image.GetPixelID();
 
                 //Write output image
