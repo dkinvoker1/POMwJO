@@ -8,6 +8,7 @@
         Title="MainWindow" Height="350" Width="525">
     <Grid>
         <Label x:Name="lTest" Content="Label" HorizontalAlignment="Left" Margin="179,157,0,0" VerticalAlignment="Top"/>
+        <Button x:Name="bWczytaj" Content="Wczytaj obraz" HorizontalAlignment="Left" Margin="75,42,0,0" VerticalAlignment="Top" Width="96" Click="bWczytaj_Click" Height="37"/>
 
     </Grid>
 </Window>
