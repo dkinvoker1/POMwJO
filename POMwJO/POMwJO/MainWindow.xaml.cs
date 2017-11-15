@@ -2,8 +2,11 @@
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -23,9 +26,11 @@ namespace POMwJO
     /// </summary>
     public partial class MainWindow : Window
     {
+        private Dispaly display;
         public MainWindow()
         {
             InitializeComponent();
+            display = new Dispaly(imgImage);
         }
 //=========================================================================================
         /// <summary>
@@ -55,13 +60,6 @@ namespace POMwJO
                 try
                 {
                     TestowyOdczytIZapis(openFileDialog1.FileName);
-                    //if ((myStream = openFileDialog1.OpenFile()) != null)
-                    //{
-                    //    using (myStream)
-                    //    {
-                    //        // Insert code to read the stream here.
-                    //    }
-                    //}
                 }
                 catch (Exception ex)
                 {
@@ -78,14 +76,6 @@ namespace POMwJO
         {
 
             string[] args = new string[3];
-            //string s = System.AppDomain.CurrentDomain.BaseDirectory;
-            //for (int i = 0; i < 5; i++)
-            //{
-            //    s = s.Remove(s.LastIndexOf("\\", s.Length - 2) + 1);
-            //}
-            //args[0] = s + "Obrazy\\abc.png";
-            //args[1] = "1";
-            //args[2] = s + "Obrazy\\cba.png";
 
             args[0] = patch;
             args[1] = "1";
@@ -95,31 +85,23 @@ namespace POMwJO
             {
                 if (args.Length < 3)
                 {
-                    //Console.WriteLine("Usage: SimpleGausian <imput> <sigma> <output>");
                     lTest.Content = "Usage: SimpleGausian <imput> <sigma> <output>";
                     return;
                 }
                 //Read imput image
                 ImageFileReader reader = new ImageFileReader();
                 reader.SetFileName(args[0]);
-                itk.simple.Image image = reader.Execute();
+                //itk.simple.Image image = reader.Execute();
+                itk.simple.Image image = SimpleITK.ReadImage(args[0]);
 
-                //Remember format
-                //itk.simple.Image image2 = new itk.simple.Image(image);
-
-                //PixelIDValueEnum id = PixelIDValueEnum.sitkVectorUInt8;
-                //PixelIDValueEnum id = image2.GetPixelID();
-
-                //Execute Gausian smoothing filter
-                SmoothingRecursiveGaussianImageFilter gausian = new SmoothingRecursiveGaussianImageFilter();
-                gausian.SetSigma(Double.Parse(args[1]));
-                image = gausian.Execute(image);
+                display.Draw(image);
+                //var bitmap = (ImageSource)new ImageSourceConverter().ConvertFrom(bufferAsArray);
 
                 //Convert?
                 //albo obraz wczytać w skali szarości(wymusić)
                 //albo rozbić na skale kolorów itd(rgb to grayscale filter pewnie)
                 //PixelIDValueEnum id = image.GetPixelID();
-                SimpleITK.Cast(image, itk.simple.PixelIDValueEnum.sitkUInt8);
+                //SimpleITK.Cast(image, itk.simple.PixelIDValueEnum.sitkUInt8);
                 //id = image.GetPixelID();
 
                 //Write output image
