@@ -26,11 +26,13 @@ namespace POMwJO
     /// </summary>
     public partial class MainWindow : Window
     {
-        private Dispaly display;
+        private ImageControler display1;
+        private ImageControler display2;
         public MainWindow()
         {
             InitializeComponent();
-            display = new Dispaly(imgImage);
+            display1 = new ImageControler(imgImage1);
+            display2 = new ImageControler(imgImage2);
         }
 //=========================================================================================
         /// <summary>
@@ -51,8 +53,8 @@ namespace POMwJO
             }
             wanted_path += "\\Obrazy";
             openFileDialog1.InitialDirectory = wanted_path;
-            openFileDialog1.Filter = "png files (*.png)|*.png|All files (*.*)|*.*";
-            openFileDialog1.FilterIndex = 2;
+            openFileDialog1.Filter = "jpeg files (*.jpeg)|*.jpeg|png files (*.png)|*.png|All files (*.*)|*.*";
+            openFileDialog1.FilterIndex = 3;
             openFileDialog1.RestoreDirectory = true;
 
             if (openFileDialog1.ShowDialog() == true)
@@ -79,7 +81,7 @@ namespace POMwJO
 
             args[0] = patch;
             args[1] = "1";
-            args[2] = patch.Insert(patch.LastIndexOf(".png"),"-kopia");
+            args[2] = patch.Insert(patch.LastIndexOf("."),"-kopia");
 
             try
             {
@@ -89,14 +91,17 @@ namespace POMwJO
                     return;
                 }
                 //Read imput image
-                ImageFileReader reader = new ImageFileReader();
-                reader.SetFileName(args[0]);
+                //ImageFileReader reader = new ImageFileReader();
+                //reader.SetFileName(args[0]);
                 //itk.simple.Image image = reader.Execute();
                 itk.simple.Image image = SimpleITK.ReadImage(args[0]);
 
-                display.Draw(image);
-                //var bitmap = (ImageSource)new ImageSourceConverter().ConvertFrom(bufferAsArray);
+                display1.Draw(image);
 
+
+                //var image2 = new itk.simple.Image(image);
+                var image2 = SimpleITK.Add(50,image);
+                display2.Draw(image2);
                 //Convert?
                 //albo obraz wczytać w skali szarości(wymusić)
                 //albo rozbić na skale kolorów itd(rgb to grayscale filter pewnie)
@@ -105,9 +110,9 @@ namespace POMwJO
                 //id = image.GetPixelID();
 
                 //Write output image
-                ImageFileWriter writer = new ImageFileWriter();
-                writer.SetFileName(args[2]);
-                writer.Execute(image);
+                //ImageFileWriter writer = new ImageFileWriter();
+                //writer.SetFileName(args[2]);
+                //writer.Execute(image);
 
                 lTest.Content = "Chyba się udało, sprwadź :P";
             }
