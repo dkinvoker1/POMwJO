@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -47,6 +49,43 @@ namespace POMwJO
             //ImageSource imageSource = new BitmapImage(new Uri(wanted_path+"\\bufor.png"));
             output.Source = bitmap;
         }
+        /// <summary>
+        /// Function that displays provided itkImage on Windows Image Control 
+        /// </summary>
+        /// <param name="image">itkImage to be displayed</param>
+        public void Draw2(itk.simple.Image image)
+        {
+            var height= 100;
+            var width = 100;
+            var bitmap = new Bitmap(width, height);
+            for(int i = 0; i < height; i++)
+			{
+                for (int j = 0; j < width; j++)
+                {
 
+                    VectorUInt32 vec = new VectorUInt32();
+                    vec.Add((uint)i);
+                    vec.Add((uint)j);
+                    var pixel = image.GetPixelAsVectorUInt8(vec);
+                    bitmap.SetPixel(i, j, System.Drawing.Color.FromArgb(pixel[0], pixel[1], pixel[2]));
+                }
+            }
+            var bitmapImage = new BitmapImage();
+            using (var memory = new MemoryStream())
+            {
+                bitmap.Save(memory, ImageFormat.Png);
+                memory.Position = 0;
+
+                bitmapImage = new BitmapImage();
+                bitmapImage.BeginInit();
+                bitmapImage.StreamSource = memory;
+                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                bitmapImage.EndInit();
+                bitmapImage.Freeze();
+            }
+
+            //ImageSource imageSource = new BitmapImage(new Uri(wanted_path+"\\bufor.png"));
+            output.Source = bitmapImage;
+        }
     }
 }

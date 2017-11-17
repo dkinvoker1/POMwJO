@@ -100,8 +100,11 @@ namespace POMwJO
 
 
                 //var image2 = new itk.simple.Image(image);
-                var image2 = SimpleITK.Add(50,image);
-                display2.Draw(image2);
+                //var image2 = SimpleITK.Add(50,image);
+                display2.Draw2(image);
+
+                //var image2 = SimpleITK.BinaryErode(image, 8);
+                //display2.Draw(image2);
                 //Convert?
                 //albo obraz wczytać w skali szarości(wymusić)
                 //albo rozbić na skale kolorów itd(rgb to grayscale filter pewnie)
