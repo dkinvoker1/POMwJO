@@ -27,6 +27,7 @@
             <MenuItem Header="Operacja">
                 <MenuItem Header="Erozja" Click="bErode_Click"/>
                 <MenuItem Header="Dylacja" Click="bDilate_Click"/>
+                <MenuItem Header="Rotacja" Click="bRotate_Click"/>
             </MenuItem>
         </Menu>
         <Label x:Name="lMorph" Content="Obraz zmieniony" Grid.Column="1" HorizontalAlignment="Center"  Grid.Row="1" VerticalAlignment="Center"/>

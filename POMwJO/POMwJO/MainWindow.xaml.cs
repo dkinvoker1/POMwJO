@@ -29,7 +29,7 @@ namespace POMwJO
         /// <summary>
         /// image container to display original image
         /// </summary>
-        private ImageControler display1;
+        private ImageControler display1; 
         /// <summary>
         /// image container to display image wit hanges in it
         /// </summary>
@@ -223,6 +223,44 @@ namespace POMwJO
                 binaryDilateFilter.SetBackgroundValue(255);
                 binaryDilateFilter.SetForegroundValue(0);
                 var image = binaryDilateFilter.Execute(currentImage);
+                display2.Draw(image);
+                currentImage = image;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+        }
+        //=========================================================================================
+        /// <summary>
+        /// Rotate current image 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void bRotate_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                int xx = (int)imgImage2.ActualWidth / 2;
+                int yy = (int)imgImage2.ActualHeight / 2;
+                int x = (int)currentImage.GetWidth() / 2;
+                int y = (int)currentImage.GetHeight() / 2;
+
+                int degrees = 20;
+                double radians = Math.PI * degrees / 180;
+
+                itk.simple.AffineTransform rotateTransformation = new itk.simple.AffineTransform(2);
+                rotateTransformation.Rotate(0,1, radians);
+                var center = new itk.simple.VectorDouble();
+                center.Add(xx);
+                center.Add(yy);
+                rotateTransformation.SetCenter(center);
+
+                itk.simple.ResampleImageFilter imageResampleFilter= new ResampleImageFilter();
+                imageResampleFilter.SetTransform(rotateTransformation);
+                imageResampleFilter.SetReferenceImage(currentImage);
+                var trImage =new itk.simple.Image(currentImage);
+                var image = imageResampleFilter.Execute(trImage);
                 display2.Draw(image);
                 currentImage = image;
             }
