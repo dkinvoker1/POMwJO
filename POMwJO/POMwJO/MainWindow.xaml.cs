@@ -26,8 +26,19 @@ namespace POMwJO
     /// </summary>
     public partial class MainWindow : Window
     {
+        /// <summary>
+        /// image container to display original image
+        /// </summary>
         private ImageControler display1;
+        /// <summary>
+        /// image container to display image wit hanges in it
+        /// </summary>
         private ImageControler display2;
+        /// <summary>
+        /// Image on which we work with all filters aplied
+        /// </summary>
+        private itk.simple.Image currentImage=new itk.simple.Image();
+
         public MainWindow()
         {
             InitializeComponent();
@@ -36,7 +47,7 @@ namespace POMwJO
         }
 //=========================================================================================
         /// <summary>
-        /// Wybranie ścieżki do wczytania pliku i wykonanie funkcji testowej(tymczasowe)
+        /// Chose file path and rea current image from it
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -61,7 +72,7 @@ namespace POMwJO
             {
                 try
                 {
-                    TestowyOdczytIZapis(openFileDialog1.FileName);
+                    OdczytZPliku(openFileDialog1.FileName);
                 }
                 catch (Exception ex)
                 {
@@ -71,40 +82,33 @@ namespace POMwJO
         }
 //=========================================================================================
         /// <summary>
-        /// Wczytanie obrazu z zadanie jścieżki i zapisanie go obok pod inną nazwą(tymczasowe)
+        /// Load image from file
         /// </summary>
-        /// <param name="patch">Ścieżka do pliku</param>
-        private void TestowyOdczytIZapis(string patch)
+        /// <param name="path">file path</param>
+        private void OdczytZPliku(string path)
         {
-
-            string[] args = new string[3];
-
-            args[0] = patch;
-            args[1] = "1";
-            args[2] = patch.Insert(patch.LastIndexOf("."),"-kopia");
-
             try
             {
-                if (args.Length < 3)
-                {
-                    lTest.Content = "Usage: SimpleGausian <imput> <sigma> <output>";
-                    return;
-                }
                 //Read imput image
-                //ImageFileReader reader = new ImageFileReader();
-                //reader.SetFileName(args[0]);
-                //itk.simple.Image image = reader.Execute();
-                itk.simple.Image image = SimpleITK.ReadImage(args[0]);
-
+                //Remember to set read pixeltype so it doesnt make errors later!
+                itk.simple.Image image = SimpleITK.ReadImage(path, PixelIDValueEnum.sitkUInt8);
+                //display original image
                 display1.Draw(image);
 
 
-                //var image2 = new itk.simple.Image(image);
-                //var image2 = SimpleITK.Add(50,image);
-                display2.Draw2(image);
+                //binarize image
+                var BinaryFilter=new itk.simple.BinaryThresholdImageFilter();
+                BinaryFilter.SetUpperThreshold(200);//max original pixel value to be considered object
+                BinaryFilter.SetLowerThreshold(0);//min original pixel value to be consideredobject
+                BinaryFilter.SetInsideValue(0);//Black as detected object
+                BinaryFilter.SetOutsideValue(255);//white as background
+                var image2=BinaryFilter.Execute(image);
+                display2.Draw(image2);
 
-                //var image2 = SimpleITK.BinaryErode(image, 8);
-                //display2.Draw(image2);
+                currentImage = image2;
+
+                //var image3 = SimpleITK.BinaryErode(image2, 8);
+                //display2.Draw(image3);
                 //Convert?
                 //albo obraz wczytać w skali szarości(wymusić)
                 //albo rozbić na skale kolorów itd(rgb to grayscale filter pewnie)
@@ -116,15 +120,118 @@ namespace POMwJO
                 //ImageFileWriter writer = new ImageFileWriter();
                 //writer.SetFileName(args[2]);
                 //writer.Execute(image);
-
-                lTest.Content = "Chyba się udało, sprwadź :P";
             }
             catch (Exception ex)
             {
                 //Console.WriteLine(ex);
-                lTest.Content = ex;
+                MessageBox.Show(ex.ToString());
             }
         }
-//=========================================================================================
+        //=========================================================================================
+        /// <summary>
+        /// Chose filepath and write current image into it
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void bZapisz_Click(object sender, RoutedEventArgs e)
+        {
+            //Stream myStream = null;
+            SaveFileDialog saveFileDialog1 = new SaveFileDialog();
+
+            string wanted_path = System.IO.Directory.GetCurrentDirectory();
+            //wanted_path = System.IO.Directory.GetCurrentDirectory();
+            for (int i = 0; i < 5; i++)
+            {
+                wanted_path = System.IO.Path.GetDirectoryName(wanted_path);
+            }
+            wanted_path += "\\Obrazy";
+            saveFileDialog1.InitialDirectory = wanted_path;
+            saveFileDialog1.Filter = "jpeg files (*.jpeg)|*.jpeg|png files (*.png)|*.png|All files (*.*)|*.*";
+            saveFileDialog1.FilterIndex = 3;
+            saveFileDialog1.RestoreDirectory = true;
+
+            if (saveFileDialog1.ShowDialog() == true)
+            {
+                try
+                {
+                    ZapisDoPliku(saveFileDialog1.FileName);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
+                }
+            }
+        }
+        //=========================================================================================
+        /// <summary>
+        /// Save image with all its hanges to file
+        /// </summary>
+        /// <param name="path">File path</param>
+        private void ZapisDoPliku(string path)
+        {
+            try
+            {
+                if (currentImage!=null)
+                {
+                    //Write current image
+                    SimpleITK.WriteImage(currentImage, path);
+                    MessageBox.Show("Chyba udało się zapisać, srawdź :P"); 
+                }
+                else
+                {
+                    MessageBox.Show("Nie istnieje obraz który można zapisać.");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+        }
+        //=========================================================================================
+        /// <summary>
+        /// Erode current image 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void bErode_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                itk.simple.BinaryErodeImageFilter binaryErodeFilter = new BinaryErodeImageFilter();
+                binaryErodeFilter.SetBackgroundValue(255);
+                binaryErodeFilter.SetForegroundValue(0);
+                var image = binaryErodeFilter.Execute(currentImage);
+                display2.Draw(image);
+                currentImage = image;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+        }
+        //=========================================================================================
+        /// <summary>
+        /// Dilate current image 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void bDilate_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                itk.simple.BinaryDilateImageFilter binaryDilateFilter = new BinaryDilateImageFilter();
+                binaryDilateFilter.SetBackgroundValue(255);
+                binaryDilateFilter.SetForegroundValue(0);
+                var image = binaryDilateFilter.Execute(currentImage);
+                display2.Draw(image);
+                currentImage = image;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+        }
+        //=========================================================================================
+
     }
 }
