@@ -37,7 +37,7 @@ namespace POMwJO
         /// <summary>
         /// Image on which we work with all filters aplied
         /// </summary>
-        private itk.simple.Image currentImage=new itk.simple.Image();
+        private itk.simple.Image currentImage;
 
         public MainWindow()
         {
@@ -195,18 +195,25 @@ namespace POMwJO
         /// <param name="e"></param>
         private void bErode_Click(object sender, RoutedEventArgs e)
         {
-            try
+            if (currentImage != null)
             {
-                itk.simple.BinaryErodeImageFilter binaryErodeFilter = new BinaryErodeImageFilter();
-                binaryErodeFilter.SetBackgroundValue(255);
-                binaryErodeFilter.SetForegroundValue(0);
-                var image = binaryErodeFilter.Execute(currentImage);
-                display2.Draw(image);
-                currentImage = image;
+                try
+                {
+                    itk.simple.BinaryErodeImageFilter binaryErodeFilter = new BinaryErodeImageFilter();
+                    binaryErodeFilter.SetBackgroundValue(255);
+                    binaryErodeFilter.SetForegroundValue(0);
+                    var image = binaryErodeFilter.Execute(currentImage);
+                    display2.Draw(image);
+                    currentImage = image;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.ToString());
+                }
             }
-            catch (Exception ex)
+            else
             {
-                MessageBox.Show(ex.ToString());
+                MessageBox.Show("Obraz nie istniej, spróbuj go wczytać.");
             }
         }
         //=========================================================================================
@@ -217,18 +224,25 @@ namespace POMwJO
         /// <param name="e"></param>
         private void bDilate_Click(object sender, RoutedEventArgs e)
         {
-            try
+            if (currentImage!=null)
             {
-                itk.simple.BinaryDilateImageFilter binaryDilateFilter = new BinaryDilateImageFilter();
-                binaryDilateFilter.SetBackgroundValue(255);
-                binaryDilateFilter.SetForegroundValue(0);
-                var image = binaryDilateFilter.Execute(currentImage);
-                display2.Draw(image);
-                currentImage = image;
+                try
+                {
+                    itk.simple.BinaryDilateImageFilter binaryDilateFilter = new BinaryDilateImageFilter();
+                    binaryDilateFilter.SetBackgroundValue(255);
+                    binaryDilateFilter.SetForegroundValue(0);
+                    var image = binaryDilateFilter.Execute(currentImage);
+                    display2.Draw(image);
+                    currentImage = image;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.ToString());
+                } 
             }
-            catch (Exception ex)
+            else
             {
-                MessageBox.Show(ex.ToString());
+                MessageBox.Show("Obraz nie istniej, spróbuj go wczytać.");
             }
         }
         //=========================================================================================
@@ -239,34 +253,41 @@ namespace POMwJO
         /// <param name="e"></param>
         private void bRotate_Click(object sender, RoutedEventArgs e)
         {
-            try
+            if (currentImage!=null)
             {
-                int xx = (int)imgImage2.ActualWidth / 2;
-                int yy = (int)imgImage2.ActualHeight / 2;
-                int x = (int)currentImage.GetWidth() / 2;
-                int y = (int)currentImage.GetHeight() / 2;
+                try
+                {
+                    int xx = (int)imgImage2.ActualWidth / 2;
+                    int yy = (int)imgImage2.ActualHeight / 2;
+                    int x = (int)currentImage.GetWidth() / 2;
+                    int y = (int)currentImage.GetHeight() / 2;
 
-                int degrees = 20;
-                double radians = Math.PI * degrees / 180;
+                    int degrees = 20;
+                    double radians = Math.PI * degrees / 180;
 
-                itk.simple.AffineTransform rotateTransformation = new itk.simple.AffineTransform(2);
-                rotateTransformation.Rotate(0,1, radians);
-                var center = new itk.simple.VectorDouble();
-                center.Add(xx);
-                center.Add(yy);
-                rotateTransformation.SetCenter(center);
+                    itk.simple.AffineTransform rotateTransformation = new itk.simple.AffineTransform(2);
+                    rotateTransformation.Rotate(0, 1, radians);
+                    var center = new itk.simple.VectorDouble();
+                    center.Add(xx);
+                    center.Add(yy);
+                    rotateTransformation.SetCenter(center);
 
-                itk.simple.ResampleImageFilter imageResampleFilter= new ResampleImageFilter();
-                imageResampleFilter.SetTransform(rotateTransformation);
-                imageResampleFilter.SetReferenceImage(currentImage);
-                var trImage =new itk.simple.Image(currentImage);
-                var image = imageResampleFilter.Execute(trImage);
-                display2.Draw(image);
-                currentImage = image;
+                    itk.simple.ResampleImageFilter imageResampleFilter = new ResampleImageFilter();
+                    imageResampleFilter.SetTransform(rotateTransformation);
+                    imageResampleFilter.SetReferenceImage(currentImage);
+                    var trImage = new itk.simple.Image(currentImage);
+                    var image = imageResampleFilter.Execute(trImage);
+                    display2.Draw(image);
+                    currentImage = image;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.ToString());
+                } 
             }
-            catch (Exception ex)
+            else
             {
-                MessageBox.Show(ex.ToString());
+                MessageBox.Show("Obraz nie istniej, spróbuj go wczytać.");
             }
         }
         //=========================================================================================
