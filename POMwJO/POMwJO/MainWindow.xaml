@@ -18,7 +18,7 @@
         </Grid.ColumnDefinitions>
         <Label x:Name="lOrginal" Content="Obraz orginalny" HorizontalAlignment="Center"  VerticalAlignment="Center"  Grid.Row="1"/>
         <Image x:Name="imgImage1" Grid.Row="2" />
-        <Image x:Name="imgImage2" Grid.Row="2" Grid.Column="1" />
+        <Image x:Name="imgImage2" Grid.Row="2" Grid.Column="1" MouseDown="imgImage2_MouseDown" />
         <Menu x:Name="menu" Grid.ColumnSpan="2" VerticalAlignment="Top">
             <MenuItem Header="Plik">
                 <MenuItem Header="Wczytaj" Click="bWczytaj_Click"/>
@@ -28,6 +28,7 @@
                 <MenuItem Header="Erozja" Click="bErode_Click"/>
                 <MenuItem Header="Dylacja" Click="bDilate_Click"/>
                 <MenuItem Header="Rotacja" Click="bRotate_Click"/>
+                <MenuItem Header="Wypełnianie kół" Click="Circles_Click"/>
             </MenuItem>
         </Menu>
         <Label x:Name="lMorph" Content="Obraz zmieniony" Grid.Column="1" HorizontalAlignment="Center"  Grid.Row="1" VerticalAlignment="Center"/>

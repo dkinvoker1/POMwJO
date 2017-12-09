@@ -39,6 +39,8 @@ namespace POMwJO
         /// </summary>
         private itk.simple.Image currentImage;
 
+        private byte minPixelValue = 1;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -97,29 +99,15 @@ namespace POMwJO
 
 
                 //binarize image
-                var BinaryFilter=new itk.simple.BinaryThresholdImageFilter();
+                var BinaryFilter = new itk.simple.BinaryThresholdImageFilter();
                 BinaryFilter.SetUpperThreshold(200);//max original pixel value to be considered object
                 BinaryFilter.SetLowerThreshold(0);//min original pixel value to be consideredobject
-                BinaryFilter.SetInsideValue(0);//Black as detected object
+                BinaryFilter.SetInsideValue(minPixelValue);//Black as detected object
                 BinaryFilter.SetOutsideValue(255);//white as background
-                var image2=BinaryFilter.Execute(image);
+                var image2 = BinaryFilter.Execute(image);
                 display2.Draw(image2);
 
                 currentImage = image2;
-
-                //var image3 = SimpleITK.BinaryErode(image2, 8);
-                //display2.Draw(image3);
-                //Convert?
-                //albo obraz wczytać w skali szarości(wymusić)
-                //albo rozbić na skale kolorów itd(rgb to grayscale filter pewnie)
-                //PixelIDValueEnum id = image.GetPixelID();
-                //SimpleITK.Cast(image, itk.simple.PixelIDValueEnum.sitkUInt8);
-                //id = image.GetPixelID();
-
-                //Write output image
-                //ImageFileWriter writer = new ImageFileWriter();
-                //writer.SetFileName(args[2]);
-                //writer.Execute(image);
             }
             catch (Exception ex)
             {
@@ -201,7 +189,7 @@ namespace POMwJO
                 {
                     itk.simple.BinaryErodeImageFilter binaryErodeFilter = new BinaryErodeImageFilter();
                     binaryErodeFilter.SetBackgroundValue(255);
-                    binaryErodeFilter.SetForegroundValue(0);
+                    binaryErodeFilter.SetForegroundValue(minPixelValue);
                     var image = binaryErodeFilter.Execute(currentImage);
                     display2.Draw(image);
                     currentImage = image;
@@ -230,7 +218,7 @@ namespace POMwJO
                 {
                     itk.simple.BinaryDilateImageFilter binaryDilateFilter = new BinaryDilateImageFilter();
                     binaryDilateFilter.SetBackgroundValue(255);
-                    binaryDilateFilter.SetForegroundValue(0);
+                    binaryDilateFilter.SetForegroundValue(minPixelValue);
                     var image = binaryDilateFilter.Execute(currentImage);
                     display2.Draw(image);
                     currentImage = image;
@@ -261,15 +249,15 @@ namespace POMwJO
                     int yy = (int)imgImage2.ActualHeight / 2;
                     int x = (int)currentImage.GetWidth() / 2;
                     int y = (int)currentImage.GetHeight() / 2;
-
-                    int degrees = 20;
+                    var spacing = currentImage.GetSpacing();
+                    int degrees = 10;
                     double radians = Math.PI * degrees / 180;
 
                     itk.simple.AffineTransform rotateTransformation = new itk.simple.AffineTransform(2);
                     rotateTransformation.Rotate(0, 1, radians);
                     var center = new itk.simple.VectorDouble();
-                    center.Add(xx);
-                    center.Add(yy);
+                    center.Add(x * spacing[0]);
+                    center.Add(y * spacing[1]);
                     rotateTransformation.SetCenter(center);
 
                     itk.simple.ResampleImageFilter imageResampleFilter = new ResampleImageFilter();
@@ -289,6 +277,109 @@ namespace POMwJO
             {
                 MessageBox.Show("Obraz nie istniej, spróbuj go wczytać.");
             }
+        }
+        //=========================================================================================
+        /// <summary>
+        /// Reduce image to filed circles 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Circles_Click(object sender, RoutedEventArgs e)
+        {
+            if (currentImage != null)
+            {
+                try
+                {
+                    var image = currentImage;
+                    var erodeFilter = new BinaryErodeImageFilter();
+                    erodeFilter.SetBackgroundValue(255);
+                    erodeFilter.SetForegroundValue(minPixelValue);
+                    erodeFilter.SetKernelRadius(2);
+                    image = erodeFilter.Execute(image);
+
+                    var dilateFilter = new BinaryDilateImageFilter();
+                    dilateFilter.SetBackgroundValue(255);
+                    dilateFilter.SetForegroundValue(minPixelValue);
+                    dilateFilter.SetKernelRadius(2);
+                    image = dilateFilter.Execute(image);
+
+                    var closingFilter = new BinaryMorphologicalClosingImageFilter();
+                    closingFilter.SetKernelRadius(50);
+                    closingFilter.SetForegroundValue(minPixelValue);
+                    image = closingFilter.Execute(image);
+
+                    var minimumFilter = new itk.simple.MinimumImageFilter();
+                    image=minimumFilter.Execute(image, currentImage);
+
+                    currentImage = image;
+                    display2.Draw(image);
+                    //itk.simple.SimpleITK.WriteImage(image, "zalewanie.jpg");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.ToString());
+                }
+            }
+            else
+            {
+                MessageBox.Show("Obraz nie istnieje, spróbuj go wczytać.");
+            }
+        }
+        //=========================================================================================
+        private void imgImage2_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            //prepare image
+            var castFilter = new itk.simple.CastImageFilter();
+            castFilter.SetOutputPixelType(itk.simple.PixelIDValueEnum.sitkFloat64);
+            var image = castFilter.Execute(currentImage);
+            //negate
+            var negateFilter = new itk.simple.InvertIntensityImageFilter();
+            negateFilter.SetMaximum(255);
+            image = negateFilter.Execute(image);
+            //rescale
+            var rescaleFilter = new itk.simple.RescaleIntensityImageFilter();//.BinaryThresholdImageFilter();
+            rescaleFilter.SetOutputMaximum(255);
+            rescaleFilter.SetOutputMinimum(-0.01);
+            image = rescaleFilter.Execute(image);
+
+            itk.simple.SimpleITK.WriteImage(image, "cast.vtk");
+
+            //get mouse position
+            var position = e.GetPosition(imgImage2);
+            var percentX = position.X / imgImage2.ActualWidth * 100;
+            var percentY = position.Y / imgImage2.ActualHeight * 100;
+            //lMorph.Content= percentX + "\n"+ percentY;
+            var x = currentImage.GetWidth() * (percentX / 100);
+            var y = currentImage.GetHeight() * (percentY / 100);
+
+            var xx = image.GetWidth();
+            var yy = image.GetHeight();
+            //initiate fast Marching
+            var marchFilter = new itk.simple.FastMarchingImageFilter();
+            VectorUIntList seeds = new VectorUIntList();
+            VectorUInt32 node = new VectorUInt32();
+                      
+            node.Add((uint)350);
+            node.Add((uint)330);
+            //node.Add(1);
+
+            seeds.Add(node);
+            marchFilter.SetTrialPoints(seeds);
+            marchFilter.SetStoppingValue(1000);
+            marchFilter.SetNormalizationFactor(10000);
+
+   
+
+            image =marchFilter.Execute(image);
+            itk.simple.SimpleITK.WriteImage(image, "fastmarch.vtk");
+            //rescale and cast
+            rescaleFilter.SetOutputMaximum(255);
+            rescaleFilter.SetOutputMinimum(0);
+            image = rescaleFilter.Execute(image);
+
+            castFilter.SetOutputPixelType(itk.simple.PixelIDValueEnum.sitkUInt8);
+            image = castFilter.Execute(image);
+            display2.Draw(image);
         }
         //=========================================================================================
 
