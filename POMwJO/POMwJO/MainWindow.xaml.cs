@@ -31,11 +31,11 @@ namespace POMwJO
         /// </summary>
         private ImageControler display1; 
         /// <summary>
-        /// image container to display image wit hanges in it
+        /// image container to display image with changes in it
         /// </summary>
         private ImageControler display2;
         /// <summary>
-        /// Image on which we work with all filters aplied
+        /// Image on which we work with all filters applied
         /// </summary>
         private itk.simple.Image currentImage;
 
@@ -47,9 +47,10 @@ namespace POMwJO
             display1 = new ImageControler(imgImage1);
             display2 = new ImageControler(imgImage2);
         }
-//=========================================================================================
+
+        //=========================================================================================
         /// <summary>
-        /// Chose file path and rea current image from it
+        /// Chose file path and read current image from it
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -57,7 +58,6 @@ namespace POMwJO
         {
             //Stream myStream = null;
             OpenFileDialog openFileDialog1 = new OpenFileDialog();
-
             string wanted_path = System.IO.Directory.GetCurrentDirectory();
             //wanted_path = System.IO.Directory.GetCurrentDirectory();
             for (int i = 0; i < 5; i++)
@@ -82,7 +82,8 @@ namespace POMwJO
                 }
             }
         }
-//=========================================================================================
+
+        //=========================================================================================
         /// <summary>
         /// Load image from file
         /// </summary>
@@ -115,6 +116,7 @@ namespace POMwJO
                 MessageBox.Show(ex.ToString());
             }
         }
+
         //=========================================================================================
         /// <summary>
         /// Chose filepath and write current image into it
@@ -150,6 +152,7 @@ namespace POMwJO
                 }
             }
         }
+
         //=========================================================================================
         /// <summary>
         /// Save image with all its hanges to file
@@ -163,18 +166,19 @@ namespace POMwJO
                 {
                     //Write current image
                     SimpleITK.WriteImage(currentImage, path);
-                    MessageBox.Show("Chyba udało się zapisać, srawdź :P"); 
+                    MessageBox.Show("Chyba udało się zapisać, sprawdź :P"); 
                 }
                 else
                 {
-                    MessageBox.Show("Nie istnieje obraz który można zapisać.");
+                    MessageBox.Show("Nie istnieje obraz, który można zapisać.");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.ToString());
+                MessageBox.Show("Pamiętaj o rozszerzenieu pliku!" + ex.ToString());
             }
         }
+
         //=========================================================================================
         /// <summary>
         /// Erode current image 
@@ -201,9 +205,10 @@ namespace POMwJO
             }
             else
             {
-                MessageBox.Show("Obraz nie istniej, spróbuj go wczytać.");
+                MessageBox.Show("Obraz nie istnieje, spróbuj go wczytać.");
             }
         }
+
         //=========================================================================================
         /// <summary>
         /// Dilate current image 
@@ -230,9 +235,10 @@ namespace POMwJO
             }
             else
             {
-                MessageBox.Show("Obraz nie istniej, spróbuj go wczytać.");
+                MessageBox.Show("Obraz nie istnieje, spróbuj go wczytać.");
             }
         }
+
         //=========================================================================================
         /// <summary>
         /// Rotate current image 
@@ -275,7 +281,7 @@ namespace POMwJO
             }
             else
             {
-                MessageBox.Show("Obraz nie istniej, spróbuj go wczytać.");
+                MessageBox.Show("Obraz nie istnieje, spróbuj go wczytać.");
             }
         }
         //=========================================================================================
@@ -290,6 +296,7 @@ namespace POMwJO
             {
                 try
                 {
+                    //otwarcie (erozja + dylacja) usunie śmieci
                     var image = currentImage;
                     var erodeFilter = new BinaryErodeImageFilter();
                     erodeFilter.SetBackgroundValue(255);
@@ -303,6 +310,7 @@ namespace POMwJO
                     dilateFilter.SetKernelRadius(2);
                     image = dilateFilter.Execute(image);
 
+                    //zamknięcie wypełni luki
                     var closingFilter = new BinaryMorphologicalClosingImageFilter();
                     closingFilter.SetKernelRadius(50);
                     closingFilter.SetForegroundValue(minPixelValue);
@@ -326,50 +334,49 @@ namespace POMwJO
             }
         }
         //=========================================================================================
-        private void imgImage2_MouseDown(object sender, MouseButtonEventArgs e)
+        private void bFFM_Click(object sender, RoutedEventArgs e)
         {
-            //prepare image
-            var castFilter = new itk.simple.CastImageFilter();
-            castFilter.SetOutputPixelType(itk.simple.PixelIDValueEnum.sitkFloat64);
-            var image = castFilter.Execute(currentImage);
+            var image = currentImage;
             //negate
             var negateFilter = new itk.simple.InvertIntensityImageFilter();
             negateFilter.SetMaximum(255);
             image = negateFilter.Execute(image);
+            //prepare image - pixel type to float64
+            var castFilter = new itk.simple.CastImageFilter();
+            castFilter.SetOutputPixelType(itk.simple.PixelIDValueEnum.sitkFloat64);
+            image = castFilter.Execute(image);    
             //rescale
             var rescaleFilter = new itk.simple.RescaleIntensityImageFilter();//.BinaryThresholdImageFilter();
-            rescaleFilter.SetOutputMaximum(255);
-            rescaleFilter.SetOutputMinimum(-0.01);
+            rescaleFilter.SetOutputMaximum(1);
+            rescaleFilter.SetOutputMinimum(-0.1);
             image = rescaleFilter.Execute(image);
+
 
             itk.simple.SimpleITK.WriteImage(image, "cast.vtk");
 
-            //get mouse position
-            var position = e.GetPosition(imgImage2);
-            var percentX = position.X / imgImage2.ActualWidth * 100;
-            var percentY = position.Y / imgImage2.ActualHeight * 100;
-            //lMorph.Content= percentX + "\n"+ percentY;
-            var x = currentImage.GetWidth() * (percentX / 100);
-            var y = currentImage.GetHeight() * (percentY / 100);
+            ////get mouse position
+            //var position = e.GetPosition(imgImage2);
+            //var percentX = position.X / imgImage2.ActualWidth * 100;
+            //var percentY = position.Y / imgImage2.ActualHeight * 100;
+            ////lMorph.Content= percentX + "\n"+ percentY;
+            //var x = currentImage.GetWidth() * (percentX / 100);
+            //var y = currentImage.GetHeight() * (percentY / 100);
+            //var xx = image.GetWidth();
+            //var yy = image.GetHeight();
 
-            var xx = image.GetWidth();
-            var yy = image.GetHeight();
             //initiate fast Marching
             var marchFilter = new itk.simple.FastMarchingImageFilter();
             VectorUIntList seeds = new VectorUIntList();
             VectorUInt32 node = new VectorUInt32();
                       
-            node.Add((uint)350);
-            node.Add((uint)330);
-            //node.Add(1);
-
+            node.Add((uint)110); //starting points
+            node.Add((uint)100);
             seeds.Add(node);
             marchFilter.SetTrialPoints(seeds);
-            marchFilter.SetStoppingValue(1000);
-            marchFilter.SetNormalizationFactor(10000);
-
-   
-
+            //marchFilter.SetStoppingValue(1000); //tego nigdy nie odkomentować, bo psuje
+            //marchFilter.SetNormalizationFactor(100);
+            
+            //zmieniac predkosc i ewentualnie porownac te parametry z poczatkowymi i  wtedy zmieniac
             image =marchFilter.Execute(image);
             itk.simple.SimpleITK.WriteImage(image, "fastmarch.vtk");
             //rescale and cast
@@ -380,6 +387,49 @@ namespace POMwJO
             castFilter.SetOutputPixelType(itk.simple.PixelIDValueEnum.sitkUInt8);
             image = castFilter.Execute(image);
             display2.Draw(image);
+
+            int[] xpoints = new int[] { 110, 171, 222, 343, 124, 225, 116, 147, 348, 339 };
+            int[] ypoints = new int[] { 100, 171, 92, 203, 264, 365, 366, 477, 358, 469 };
+            char[] wartosci = new char[] {'1', 'A', '2', 'B', '3', 'C', '4', 'D', '5', 'E' };
+            //double[] xpercent = new double[10];
+            //double[] ypercent = new double[10];
+            //for (int i = 0; i < xpoints.Length; i++)
+            //{
+            //    xpercent[i] = xpoints[i] * 100 / xx;
+            //    ypercent[i] = ypoints[i] * 100 / yy;
+            //}
+
+            VectorUInt32 vector1;
+            int[] sciezka = new int[xpoints.Length];
+            for (int i = 0; i < xpoints.Length; i++)
+            {
+                vector1 = new VectorUInt32(new uint[] { Convert.ToUInt32(xpoints[i]), Convert.ToUInt32(ypoints[i]) });
+                sciezka[i] = image.GetPixelAsUInt8(vector1); //odczytanie wartości pikseli ze scieżki
+            }
+            string[] raport = new string[xpoints.Length-1];
+            for (int i = 1; i < xpoints.Length; i++)
+            {
+                if (sciezka[i]>sciezka[i-1])
+                {
+                    raport[i - 1] = string.Format("Kolejność prawidłowa: {0} -> {1}", wartosci[i - 1], wartosci[i]);
+                }
+                else
+                {
+                    raport[i - 1] = string.Format("Kolejność BŁĘDNA: {0} -> {1}", wartosci[i - 1], wartosci[i]);
+                    MessageBox.Show(raport[i - 1], "BŁĄD!");
+                    break;
+                }
+
+                //uint bx = Convert.ToUInt32((int)Math.Floor((xpercent[sciezka.Last()] * xx) / 100));
+                //uint by = Convert.ToUInt32((int)Math.Floor((ypercent[sciezka.Last()] * yy) / 100));
+                //uint nx = Convert.ToUInt32((int)Math.Floor((xpercent[i] * xx) / 100));
+                //uint ny = Convert.ToUInt32((int)Math.Floor((ypercent[i] * yy) / 100));
+                //vector1 = new Vector(newx, newy);
+                //vector1 = new VectorUInt32(new uint[] { bx, by }); //współrzędne poprzedniego punktu
+                //vector2 = new VectorUInt32(new uint[] { nx, ny }); //współrzędne aktualnego punktu
+            }
+            string toDisplay = string.Join(Environment.NewLine, raport);
+            MessageBox.Show(toDisplay, "Podsumowanie");
         }
         //=========================================================================================
 
