@@ -50,7 +50,7 @@ namespace POMwJO
 
         //=========================================================================================
         /// <summary>
-        /// Chose file path and read current image from it
+        /// Menu - wczytaj. Choose file path and read current image from it
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -119,7 +119,7 @@ namespace POMwJO
 
         //=========================================================================================
         /// <summary>
-        /// Chose filepath and write current image into it
+        /// Menu - zapisz. Choose filepath and write current image into it
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -181,7 +181,7 @@ namespace POMwJO
 
         //=========================================================================================
         /// <summary>
-        /// Erode current image 
+        /// Menu- erozja. Erode current image 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -211,7 +211,7 @@ namespace POMwJO
 
         //=========================================================================================
         /// <summary>
-        /// Dilate current image 
+        /// Menu - dylacja. Dilate current image 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -241,7 +241,7 @@ namespace POMwJO
 
         //=========================================================================================
         /// <summary>
-        /// Rotate current image 
+        /// Menu- rotacja. Rotate current image 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -284,9 +284,10 @@ namespace POMwJO
                 MessageBox.Show("Obraz nie istnieje, spróbuj go wczytać.");
             }
         }
+
         //=========================================================================================
         /// <summary>
-        /// Reduce image to filed circles 
+        /// Menu - wypełnianie kół. Reduce image to filed circles 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -296,32 +297,40 @@ namespace POMwJO
             {
                 try
                 {
-                    //otwarcie (erozja + dylacja) usunie śmieci
                     var image = currentImage;
+
+                    //otwarcie (erozja + dylacja) usunie śmieci i linii między kołami
                     var erodeFilter = new BinaryErodeImageFilter();
                     erodeFilter.SetBackgroundValue(255);
                     erodeFilter.SetForegroundValue(minPixelValue);
-                    erodeFilter.SetKernelRadius(2);
+                    erodeFilter.SetKernelType(KernelEnum.sitkCross);
+                    erodeFilter.SetKernelRadius(1);
                     image = erodeFilter.Execute(image);
+                    itk.simple.SimpleITK.WriteImage(image, "zalewanieErozja.jpg");
 
                     var dilateFilter = new BinaryDilateImageFilter();
                     dilateFilter.SetBackgroundValue(255);
                     dilateFilter.SetForegroundValue(minPixelValue);
-                    dilateFilter.SetKernelRadius(2);
+                    dilateFilter.SetKernelType(KernelEnum.sitkCross);
+                    dilateFilter.SetKernelRadius(1);
                     image = dilateFilter.Execute(image);
+                    itk.simple.SimpleITK.WriteImage(image, "zalewanieDylacja2.jpg");
 
                     //zamknięcie wypełni luki
                     var closingFilter = new BinaryMorphologicalClosingImageFilter();
-                    closingFilter.SetKernelRadius(50);
+                    closingFilter.SetKernelType(KernelEnum.sitkBox);
+                    closingFilter.SetKernelRadius(15);
                     closingFilter.SetForegroundValue(minPixelValue);
                     image = closingFilter.Execute(image);
+                    itk.simple.SimpleITK.WriteImage(image, "zalewanieZamkniecie.jpg");
 
                     var minimumFilter = new itk.simple.MinimumImageFilter();
                     image=minimumFilter.Execute(image, currentImage);
+                    itk.simple.SimpleITK.WriteImage(image, "zalewanieMinimum.jpg");
 
                     currentImage = image;
                     display2.Draw(image);
-                    //itk.simple.SimpleITK.WriteImage(image, "zalewanie.jpg");
+                    itk.simple.SimpleITK.WriteImage(image, "zalewanie.jpg");
                 }
                 catch (Exception ex)
                 {
@@ -333,7 +342,13 @@ namespace POMwJO
                 MessageBox.Show("Obraz nie istnieje, spróbuj go wczytać.");
             }
         }
+
         //=========================================================================================
+        /// <summary>
+        /// Menu - Fastforward. Check the time to hit every pixel in image.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void bFFM_Click(object sender, RoutedEventArgs e)
         {
             var image = currentImage;
@@ -367,15 +382,20 @@ namespace POMwJO
             //initiate fast Marching
             var marchFilter = new itk.simple.FastMarchingImageFilter();
             VectorUIntList seeds = new VectorUIntList();
+
+            int[] xpoints = new int[] { 110, 171, 222, 343, 124, 225, 116, 147, 348, 339 };
+            int[] ypoints = new int[] { 100, 171, 92, 203, 264, 365, 366, 477, 358, 469 };
+            char[] wartosci = new char[] {'1', 'A', '2', 'B', '3', 'C', '4', 'D', '5', 'E' };
+
             VectorUInt32 node = new VectorUInt32();
                       
-            node.Add((uint)110); //starting points
-            node.Add((uint)100);
+            node.Add((uint)xpoints[0]); //starting points
+            node.Add((uint)ypoints[0]);
             seeds.Add(node);
             marchFilter.SetTrialPoints(seeds);
-            //marchFilter.SetStoppingValue(1000); //tego nigdy nie odkomentować, bo psuje
-            //marchFilter.SetNormalizationFactor(100);
-            
+            //marchFilter.SetStoppingValue(10); //tego nigdy nie odkomentować, bo psuje
+            //marchFilter.SetNormalizationFactor(1000);
+
             //zmieniac predkosc i ewentualnie porownac te parametry z poczatkowymi i  wtedy zmieniac
             image =marchFilter.Execute(image);
             itk.simple.SimpleITK.WriteImage(image, "fastmarch.vtk");
@@ -388,9 +408,7 @@ namespace POMwJO
             image = castFilter.Execute(image);
             display2.Draw(image);
 
-            int[] xpoints = new int[] { 110, 171, 222, 343, 124, 225, 116, 147, 348, 339 };
-            int[] ypoints = new int[] { 100, 171, 92, 203, 264, 365, 366, 477, 358, 469 };
-            char[] wartosci = new char[] {'1', 'A', '2', 'B', '3', 'C', '4', 'D', '5', 'E' };
+
             //double[] xpercent = new double[10];
             //double[] ypercent = new double[10];
             //for (int i = 0; i < xpoints.Length; i++)
@@ -431,7 +449,6 @@ namespace POMwJO
             string toDisplay = string.Join(Environment.NewLine, raport);
             MessageBox.Show(toDisplay, "Podsumowanie");
         }
-        //=========================================================================================
 
     }
 }
